@@ -1,0 +1,253 @@
+
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Location Filter</title>
+  <meta name="description" content="Filters location">
+  <meta name="author" content="Oscar Ramos">
+
+  <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+<script type="application/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="application/javascript" src="https://momentjs.com/downloads/moment.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+</head>
+
+<body>
+
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: Roboto, Arial, sans-serif;
+    }
+
+    html, body {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        background-color: #d3d1da;
+        display: flex;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .wrapper {
+        width: 100%;
+        max-width: 400px;
+        min-height: 250px;
+        padding: 25px;
+        border-radius: 8px;
+        background-color: #9d9ba5; 
+        display: flex;
+        flex-flow: column;
+        justify-content: space-between;
+    }
+
+    .input-field {
+        width: 100%;
+        margin: 0 0 20px 0;
+    }
+
+    .input-field .label {
+        display: block;
+        font-size: 14px;
+        padding-bottom: 4px;
+        font-weight: 300;
+    }
+
+    .input-field input {
+        border: 0;
+        background-color: #3f4e56;
+        color: #fff;
+        padding: 5px 10px;
+        display: block;
+        border-radius: 3px;
+        width: 100%;
+
+    }
+
+    .input-field input:focus, .input-field input:active {
+        outline: 0;
+    }
+
+    #filter_locations {
+        border: 0;
+        padding: 5px 10px;
+        display: block;
+        background-color: #fff;
+        width: 100%;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    button {
+        cursor: pointer;
+        border-radius: 3px;
+    }
+
+    select {
+        border: 0;
+        background-color: #3f4e56;
+        color: #fff;
+        padding: 5px 10px;
+        display: inline-block;
+        margin-right: 20px;
+        cursor: pointer;
+        border-radius: 3px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    #resrender {
+        padding: 10px;
+        background-color: #3f4e56;
+        margin: 20px 0;
+        font-size: 14px;
+        font-weight: 300;
+        line-height: 20px;
+        border-radius: 3px;
+        color: #fff;
+    }
+
+</style>
+
+<div class="wrapper">
+        <p class="input-field">
+                <span class="label">
+                    Enter date
+                </span>
+                <input id="time" type="text" name="time" placeholder="2016-05-25" value="2016-05-25" />
+        </p>
+
+        <div id="results">
+    
+            </div>
+            <div id="resrender">
+            Press "filter" button to fetch locations from server and distances between both points will be calculated.
+            </div>
+
+        <div class="button-container">
+                <button id="filter_locations">
+                        FILTER
+                    </button>
+        </div>
+
+</div>    
+
+
+<!-- two select fields will be created here when user presses FILTER button -->
+
+
+
+
+  <script>
+
+    
+    // target 'input' with id 'time' - used for filtering out location objects retrieved from the server
+    const timeInput = $('#time');
+
+    // target 'input' with id 'filter_locations' - used for making a call to the server so it would fetch location data and filter
+    const filterButton = $('#filter_locations');
+
+    // target 'div' with id 'results' - used to display select fields for distance calculations
+    const results = $('#results');
+
+    // hold location objects that are retrieved from server
+    let locationObjects = [];
+
+    // target 'div' with id 'resrender' - used to display output of distance calculations
+    const renderResponse = $('#resrender');
+
+    // if user changes input inside elements with id 'from' OR 'to' that are inside 'body' tag
+    // then a following function will run
+    $('body').on('change', '#from, #to', () => {
+        
+        // target elements with id 'from' and 'to' which are SELECT elements and find a currently selected option
+        // by user
+        const $from = $('#from').find(':selected');
+        const $to = $('#to').find(':selected');
+        
+        // make a request to our server and ask distance between two points
+         const request = $.ajax({
+            url: "/distance",
+            method: "POST",
+            data: {
+                point1: {
+                    lat: $from.data('lat'),
+                    lng: $from.data('lng')
+                },
+                point2: {
+                    lat: $to.data('lat'),
+                    lng: $to.data('lng')
+                }
+                },
+            });
+
+            // the following function will run when response from server is NOT error
+            request.done(response => {
+                //PUT THE DISTANCE OUTPUT
+                
+                renderResponse.html(`The distance between both points is ${response} km`);
+                
+                // console.log('DISTANCE', response);
+            });
+    });
+
+    // when user clicks on element then the following code will run
+    filterButton.on('click', e => {
+        
+        // make a request to the server and provide time that user has inputed
+        const request = $.ajax({
+            url: "/time",
+            method: "POST",
+            data: {
+                time: moment(timeInput.val()).unix()
+                },
+            });
+            
+            // following function will run when response from server is NOT error
+            request.done(response => {
+             
+            // we get json stringified response from the server and must parse it before we can access it like an object
+             locationObjects = JSON.parse(response);
+
+             // clear all html that is inside results element
+             results.html('');
+
+                // using backticks we create two select tags with id-s and populate it with options, every option
+                // is a single location object, we create those options using a .map method on array of objects
+                results.append(`
+            <select id="from">
+                    ${locationObjects.map(locationObject => `<option data-lat="${locationObject.lat}" data-lng="${locationObject.lng}">Lng: ${locationObject.lng} Lat: ${locationObject.lat}</option>`)}
+            </select>
+            <select id="to">
+                    ${locationObjects.map(locationObject => `<option data-lat="${locationObject.lat}" data-lng="${locationObject.lng}">Lng: ${locationObject.lng} Lat: ${locationObject.lat}</option>`)}
+            </select>
+            
+            `);
+
+        });
+            
+            // return error if error
+            request.fail((jqXHR, textStatus) => {
+            console.error( "Request failed: " + textStatus );
+            });
+    });
+    
+
+    
+        
+    </script>
+
+   
+
+</body>
+</html>
