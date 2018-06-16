@@ -126,3 +126,8 @@
 2018-06-15 8:59:59 LOG :: New connection from ::1
 2018-06-15 9:00:10 LOG :: Data was successfully fetched from http://188.166.115.129:4545/data.json
 2018-06-15 9:00:21 LOG :: Distance was successfully calculated.
+2018-06-15 9:06:52 LOG :: New connection from ::1
+2018-06-15 9:06:55 LOG :: Data was successfully fetched from http://188.166.115.129:4545/data.json
+2018-06-15 9:06:56 LOG :: Distance was successfully calculated.
+2018-06-15 9:06:58 LOG :: Distance was successfully calculated.
+2018-06-15 9:07:01 LOG :: Distance was successfully calculated.
